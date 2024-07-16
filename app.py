@@ -20,20 +20,14 @@ server.config['CSRF_ENABLED'] = True
 db.init_app(server)
 migrate = Migrate(server, db)
 
-# # Setup Flask-Login
-# login_manager = LoginManager()
-# login_manager.init_app(server)
-# login_manager.login_view = 'login'
+# Setup Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(server)
+login_manager.login_view = '/login'
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return User.query.get(int(user_id))
-#
-# @server.route('/logout')
-# @login_required
-# def logout():
-#     logout_user()
-#     return redirect('/login')
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Setup Flask-Admin
 admin = Admin(server, name='Admin', template_mode='bootstrap3')
@@ -67,21 +61,7 @@ def get_relative_path(page_name):
     return dash.page_registry[f'pages.{page_name}']['relative_path']
 
 
-sidebar = html.Div(
-    [
-        dbc.Nav(
-            [
-                dbc.NavLink("Home", href=get_relative_path('home'), active="exact"),
-                dbc.NavLink("Projects", href=get_relative_path('projects'), active="exact"),
-                dbc.NavLink("Admin", href='/admin', active="exact"),
-                # dbc.NavLink("Login", href=get_relative_path('login'), active="exact"),
-            ],
-            vertical=True,
-            pills=True,
-        ),
-    ],
-    style=SIDEBAR_STYLE,
-)
+sidebar = html.Div(id='sidebar-content', style=SIDEBAR_STYLE)
 
 content = html.Div(dash.page_container,
     id="page-content", style=CONTENT_STYLE
@@ -98,28 +78,40 @@ app.layout = html.Div([
 ])
 
 @app.callback(
+    Output('sidebar-content', 'children'),
+    [Input('url', 'pathname')]
+)
+def update_sidebar(pathname):
+    links = [
+        dbc.NavLink("Home", href=get_relative_path('home'), active="exact"),
+    ]
+    if current_user.is_authenticated:
+        links += [
+            dbc.NavLink("Projects", href=get_relative_path('projects'), active="exact"),
+            dbc.NavLink("Admin", href='/admin', active="exact"),
+            dbc.NavLink("Logout", href='/logout', active="exact"),
+        ]
+    else:
+        links += [
+            dbc.NavLink("Login", href='/login', active="exact")
+        ]
+    return dbc.Nav(links, vertical=True, pills=True)
+
+
+@app.callback(
     Output('div-for-redirect', 'children'),
     Input('url', 'pathname')
 )
 def redirect_default(url_pathname):
-    known_paths = list(p['relative_path'] for p in dash.page_registry.values())
-    if url_pathname == '/admin':
-        return dcc.Location(pathname='/admin/', id="redirect-me")
-    elif url_pathname not in known_paths:
+    if url_pathname == '/logout':
+        logout_user()
+        return dcc.Location(pathname='/login', id="redirect-me")
+    elif url_pathname == '/':
         return dcc.Location(pathname=get_relative_path('home'), id="redirect-me")
+    elif url_pathname == get_relative_path('projects') and not current_user.is_authenticated:
+        return dcc.Location(pathname='/login', id="redirect-me")
     else:
         return ""
-
-
-# # Protect pages with login_required
-# @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
-# def display_page(pathname):
-#     if pathname == '/projects' and not current_user.is_authenticated:
-#         return 'You need to log in to access this page.'
-#     elif pathname == '/projects':
-#         return pages.projects.layout
-#     else:
-#         return pages.home.layout
 
 
 @app.callback(

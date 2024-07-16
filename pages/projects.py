@@ -6,10 +6,6 @@ import pandas as pd
 
 dash.register_page(__name__)
 
-layout = html.Div([
-    html.H1('Projects'),
-])
-
 layout = html.Div(children=[
     dbc.Card(
         dbc.CardBody([
