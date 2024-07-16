@@ -35,9 +35,9 @@ migrate = Migrate(server, db)
 #     logout_user()
 #     return redirect('/login')
 
-# # Setup Flask-Admin
-# admin = Admin(server, name='Admin', template_mode='bootstrap3')
-# admin.add_view(ModelView(User, db.session))
+# Setup Flask-Admin
+admin = Admin(server, name='Admin', template_mode='bootstrap3')
+admin.add_view(ModelView(User, db.session))
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 app = dash.Dash(
@@ -73,6 +73,7 @@ sidebar = html.Div(
             [
                 dbc.NavLink("Home", href=get_relative_path('home'), active="exact"),
                 dbc.NavLink("Projects", href=get_relative_path('projects'), active="exact"),
+                dbc.NavLink("Admin", href='/admin', active="exact"),
                 # dbc.NavLink("Login", href=get_relative_path('login'), active="exact"),
             ],
             vertical=True,
@@ -102,7 +103,9 @@ app.layout = html.Div([
 )
 def redirect_default(url_pathname):
     known_paths = list(p['relative_path'] for p in dash.page_registry.values())
-    if url_pathname not in known_paths:
+    if url_pathname == '/admin':
+        return dcc.Location(pathname='/admin/', id="redirect-me")
+    elif url_pathname not in known_paths:
         return dcc.Location(pathname=get_relative_path('home'), id="redirect-me")
     else:
         return ""
