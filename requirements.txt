@@ -1,0 +1,9 @@
+dash
+dash-bootstrap-components
+flask
+Flask-Admin
+flask-login
+flask-sqlalchemy
+Flask-Migrate
+databricks-sql-connector[sqlalchemy]
+werkzeug
