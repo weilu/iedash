@@ -27,6 +27,26 @@ open http://127.0.0.1:8050/
 ```
 You should see the data app.
 
+### Creating a test user
+
+This app has simple authentication setup for demo purposes.
+To view the pages behind the login screen, you will need to create a test user in the DB.
+First, start the flask shell
+```bash
+flask shell
+```
+
+Then paste and execute the following code:
+
+```py
+from models import User, db
+new_user = User(username='admin')
+new_user.set_password('admin')
+db.session.add(new_user)
+db.session.commit()
+```
+
+You should then be able to login with username admin and password admin.
 
 ## Deployment
 
